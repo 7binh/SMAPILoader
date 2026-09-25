@@ -1,92 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:fillViewport="true">
+	android:fillViewport="true"
+	android:background="?attr/android:colorBackground">
 
 	<LinearLayout
 		android:orientation="vertical"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingTop="36dp"
+		android:paddingBottom="24dp">
+
+		<!-- App Header -->
 		<LinearLayout
-			android:layout_marginTop="50dp"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical"
-			android:gravity="center">
-		/>
+			android:gravity="center"
+			android:layout_marginBottom="20dp">
+
+			<ImageView
+				android:layout_width="64dp"
+				android:layout_height="64dp"
+				android:src="@drawable/icon"
+				android:contentDescription="SMAPI Icon"
+				android:layout_marginBottom="12dp" />
 
 			<TextView
-				android:id="@+id/launcherInfoTextView"
-				android:textSize="16sp"
-				android:gravity="center_horizontal"
-				android:text="Launcher App Info..."
 				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"/>
+				android:layout_height="wrap_content"
+				android:text="SMAPI Launcher"
+				android:textSize="24sp"
+				android:fontFamily="sans-serif-medium"
+				android:textColor="?attr/colorOnSurface"
+				android:gravity="center" />
 
 			<TextView
-				android:id="@+id/SMAPIInstallInfoTextView"
-				android:textSize="18sp"
-				android:gravity="center_horizontal"
-				android:text="SMAPI..."
 				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"/>
-
+				android:layout_height="wrap_content"
+				android:text="Stardew Valley Modding Platform"
+				android:textSize="14sp"
+				android:fontFamily="sans-serif"
+				android:textColor="?attr/colorOnSurfaceVariant"
+				android:gravity="center"
+				android:layout_marginTop="2dp" />
 		</LinearLayout>
 
-		<LinearLayout
-			android:gravity="center_vertical"
+		<!-- Info Card -->
+		<com.google.android.material.card.MaterialCardView
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:layout_gravity="center_vertical"
-			android:layout_marginBottom="50dp"
-			android:layout_marginHorizontal="20dp"
-			android:orientation="vertical">
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="24dp"
+			app:cardCornerRadius="20dp"
+			app:cardElevation="0dp"
+			app:strokeWidth="1dp"
+			app:strokeColor="?attr/colorOutlineVariant"
+			app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
 			<LinearLayout
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:orientation="vertical"
-				android:layout_marginHorizontal="50dp"
-				android:gravity="center_horizontal"
-				>
-				<Button
-				   android:id="@+id/StartGame"
-				   android:layout_width="match_parent"
-				   android:layout_height="match_parent"
-				   android:text="Start Game"
-				   android:textAllCaps="false"
-				   android:layout_marginVertical="10dp"
-					/>
+				android:padding="20dp">
 
-				<Button
-					android:id="@+id/InstallSMAPIZip"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:text="Install SMAPI From Zip"
-					android:layout_marginVertical="10dp"
-					android:textAllCaps="false"
-					/>
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="DEVICE &amp; GAME STATUS"
+					android:textSize="11sp"
+					android:letterSpacing="0.08"
+					android:textAllCaps="true"
+					android:textStyle="bold"
+					android:textColor="?attr/colorPrimary"
+					android:layout_marginBottom="8dp" />
 
-				<Button
-					android:id="@+id/ModManagerBtn"
+				<TextView
+					android:id="@+id/launcherInfoTextView"
 					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:text="Mod Manager"
-					android:layout_marginVertical="10dp"
-					android:textAllCaps="false"
-					/>
+					android:layout_height="wrap_content"
+					android:textSize="13sp"
+					android:lineSpacingMultiplier="1.2"
+					android:textColor="?attr/colorOnSurfaceVariant"
+					android:text="Loading launcher info..." />
 
-				<Button
-					android:id="@+id/UploadLog"
+				<View
 					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:text="Share Log"
-					android:textAllCaps="false"
-					android:layout_marginVertical="10dp"
-					/>
-				
+					android:layout_height="1dp"
+					android:background="?attr/colorOutlineVariant"
+					android:layout_marginVertical="12dp" />
+
+				<TextView
+					android:id="@+id/SMAPIInstallInfoTextView"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:textSize="14sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorPrimary"
+					android:text="Checking SMAPI..." />
+
+				<!-- Secondary Actions for Stardew APK detection -->
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal"
+					android:layout_marginTop="14dp">
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/SelectApkBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_weight="1"
+						android:layout_height="44dp"
+						android:text="Chọn file APK"
+						android:textSize="13sp"
+						app:cornerRadius="22dp"
+						android:textAllCaps="false"
+						android:layout_marginEnd="6dp" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/RescanGameBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_weight="1"
+						android:layout_height="44dp"
+						android:text="Quét lại game"
+						android:textSize="13sp"
+						app:cornerRadius="22dp"
+						android:textAllCaps="false"
+						android:layout_marginStart="6dp" />
+				</LinearLayout>
 			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+
+		<!-- Actions -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:gravity="center">
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/StartGame"
+				style="@style/Widget.Material3.Button"
+				android:layout_width="match_parent"
+				android:layout_height="56dp"
+				android:text="Start Game"
+				android:textSize="16sp"
+				android:fontFamily="sans-serif-medium"
+				app:cornerRadius="28dp"
+				android:textAllCaps="false"
+				android:layout_marginBottom="12dp" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/InstallSMAPIZip"
+				style="@style/Widget.Material3.Button.TonalButton"
+				android:layout_width="match_parent"
+				android:layout_height="52dp"
+				android:text="Install SMAPI From Zip"
+				android:textSize="15sp"
+				app:cornerRadius="26dp"
+				android:textAllCaps="false"
+				android:layout_marginBottom="12dp" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/ModManagerBtn"
+				style="@style/Widget.Material3.Button.TonalButton"
+				android:layout_width="match_parent"
+				android:layout_height="52dp"
+				android:text="Mod Manager"
+				android:textSize="15sp"
+				app:cornerRadius="26dp"
+				android:textAllCaps="false"
+				android:layout_marginBottom="12dp" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/UploadLog"
+				style="@style/Widget.Material3.Button.OutlinedButton"
+				android:layout_width="match_parent"
+				android:layout_height="50dp"
+				android:text="Share SMAPI Log"
+				android:textSize="15sp"
+				app:cornerRadius="25dp"
+				android:textAllCaps="false"
+				android:layout_marginBottom="16dp" />
+
 		</LinearLayout>
 	</LinearLayout>
 </ScrollView>

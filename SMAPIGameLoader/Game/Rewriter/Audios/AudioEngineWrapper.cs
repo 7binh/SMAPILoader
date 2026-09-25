@@ -1,7 +1,6 @@
-﻿using Android.Webkit;
+using Android.Webkit;
 using HarmonyLib;
 using Microsoft.Xna.Framework.Audio;
-using StardewValley.Audio;
 using System;
 using System.Collections.Generic;
 using System.Linq;

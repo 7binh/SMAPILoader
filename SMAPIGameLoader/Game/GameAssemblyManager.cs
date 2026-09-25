@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using MonoGame.Framework.Utilities;
 using SMAPIGameLoader.Game;
 using SMAPIGameLoader.Launcher;
@@ -47,6 +47,12 @@ internal class GameAssemblyManager
             var store = new AssemblyStoreExplorer(appInfo.PublicSourceDir, keepStoreInMemory: true);
             foreach (var asm in store.Assemblies)
             {
+                // Never overwrite game engine or core game assemblies
+                if (asm.Name == "MonoGame.Framework" || asm.Name == "StardewValley" || asm.Name == "StardewValley.GameData")
+                {
+                    Console.WriteLine($"Skipping loader copy of game assembly: {asm.Name}");
+                    continue;
+                }
                 asm.ExtractImage(assembliesOutputDirPath);
             }
             Console.WriteLine("done clone SMAPI Game Loader Assemblies");

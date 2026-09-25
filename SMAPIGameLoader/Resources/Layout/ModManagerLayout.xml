@@ -1,57 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <LinearLayout
-        android:orientation="horizontal"
+    android:layout_height="match_parent"
+    android:background="?attr/android:colorBackground">
+
+    <!-- Top Header Card -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="20dp"
-    >
-        <TextView
-            android:gravity="center"
-            android:id="@+id/foundModsText"
-            android:textSize="20sp"
-            android:text="Found Mods: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    
-    </LinearLayout>
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="10dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="14dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/foundModsText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Found Mods: 0"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="?attr/colorOnSurface" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Mods List -->
     <ListView
         android:id="@+id/modsListViews"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="2dp" 
+        android:layout_height="0dp"
         android:layout_weight="1"
-    />
+        android:divider="@android:color/transparent"
+        android:dividerHeight="8dp"
+        android:paddingVertical="4dp"
+        android:clipToPadding="false" />
 
+    <!-- Bottom Actions -->
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="40dp"
-        >
-        <Button
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:gravity="center">
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/InstallModBtn"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Install Mod"
-            android:layout_marginBottom="30dp"
-			android:textAllCaps="false"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            />
-		<Button
-		   android:id="@+id/OpenFolderModsBtn"
-		   android:layout_width="match_parent"
-		   android:layout_height="match_parent"
-		   android:text="Open Folder Mods"
-		   android:layout_marginBottom="30dp"
-		   android:textAllCaps="false"
-		   android:layout_weight="1"
-            />
+            android:layout_marginEnd="8dp"
+            android:text="Install Mod"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            app:cornerRadius="26dp"
+            android:textAllCaps="false" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/OpenFolderModsBtn"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Open Mods Folder"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            app:cornerRadius="26dp"
+            android:textAllCaps="false" />
 
     </LinearLayout>
 </LinearLayout>

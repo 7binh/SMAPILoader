@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net9.0-android</TargetFramework>
 		<OutputType>Exe</OutputType>
@@ -16,6 +16,8 @@
 		<!-- Fix for .NET9 -->
 		<NoWarn>$(NoWarn);CS1705;MSB3277</NoWarn>
 		<GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+		<AndroidSdkDirectory Condition="'$(AndroidSdkDirectory)' == ''">C:\Users\sevenguyen\AppData\Local\Android\Sdk</AndroidSdkDirectory>
+		<JavaSdkDirectory Condition="'$(JavaSdkDirectory)' == ''">C:\Program Files\Microsoft\jdk-17.0.20.1-hotspot</JavaSdkDirectory>
 
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -48,6 +50,7 @@
 		<PackageReference Include="SkiaSharp" Version="2.88.9" />
 		<PackageReference Include="System.IO.Compression" Version="4.3.0" />
 		<PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.7.0.4" />
+		<PackageReference Include="Xamarin.Google.Android.Material" Version="1.12.0.1" />
 		<PackageReference Include="Xamarin.Essentials" Version="1.7.7" />
 
 	</ItemGroup>
@@ -94,5 +97,9 @@
 	<Target Name="RestoreDotnetTools" BeforeTargets="Restore">
 		<Message Text="Restoring dotnet tools" Importance="High" />
 		<Exec Command="dotnet tool restore" />
+	</Target>
+	<Target Name="PatchMonoRuntimeInApk" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+		<Message Text="=== Automatically Patching libmonosgen-2.0.so in APK ===" Importance="High" />
+		<Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\patch_apk.ps1&quot;" />
 	</Target>
 </Project>

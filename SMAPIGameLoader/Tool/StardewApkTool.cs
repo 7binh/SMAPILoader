@@ -1,11 +1,12 @@
-﻿using Android.App;
+#nullable enable
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Xamarin.Essentials;
 
 namespace SMAPIGameLoader;
 
@@ -13,75 +14,241 @@ internal static class StardewApkTool
 {
     public const string GamePlayStorePackageName = "com.chucklefish.stardewvalley";
     public const string GameGalaxyStorePackageName = "com.chucklefish.stardewvalleysamsung";
-    static bool IsGameFromPlayStore = false;
-    static bool IsGameFromGalaxyStore = false;
-    static PackageInfo _currentPackageInfo;
 
-    //init at first SDK
+    private const string PrefKeyCustomApkPath = "custom_stardew_apk_path";
+
+    public static string? CustomApkPath { get; private set; }
+    public static string DetectionStatus { get; private set; } = "Chưa phát hiện game";
+    public static bool IsGameFromPlayStore { get; private set; }
+    public static bool IsGameFromGalaxyStore { get; private set; }
+
+    private static PackageInfo? _currentPackageInfo;
+    public static PackageInfo? CurrentPackageInfo => _currentPackageInfo;
+
     static StardewApkTool()
     {
-        Console.WriteLine("Initialize Stardew Apk Tool");
-        var playStore = ApkTool.GetPackageInfo(GamePlayStorePackageName);
-        var samsung = ApkTool.GetPackageInfo(GameGalaxyStorePackageName);
+        DetectGame();
+    }
 
-        //select samsung first, better for debug, test app
+    public static bool DetectGame()
+    {
+        Console.WriteLine("[StardewApkTool] Running DetectGame...");
+        _currentPackageInfo = null;
+        IsGameFromPlayStore = false;
+        IsGameFromGalaxyStore = false;
+
+        // 1. Check custom APK path saved in preferences
+        try
+        {
+            string savedApk = Preferences.Get(PrefKeyCustomApkPath, string.Empty);
+            if (!string.IsNullOrEmpty(savedApk) && File.Exists(savedApk))
+            {
+                if (SetCustomApk(savedApk))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[StardewApkTool] Error reading saved APK preference: " + ex.Message);
+        }
+
+        CustomApkPath = null;
+
+        // 2. Check Galaxy Store version
+        var samsung = ApkTool.GetPackageInfo(GameGalaxyStorePackageName);
         if (samsung != null)
         {
             _currentPackageInfo = samsung;
             IsGameFromGalaxyStore = true;
-            Console.WriteLine("Game Install From Galaxy Store");
+            DetectionStatus = $"Galaxy Store ({samsung.VersionName})";
+            Console.WriteLine("[StardewApkTool] " + DetectionStatus);
+            return true;
         }
-        else if (playStore != null)
+
+        // 3. Check Google Play Store / default package name
+        var playStore = ApkTool.GetPackageInfo(GamePlayStorePackageName);
+        if (playStore != null)
         {
             _currentPackageInfo = playStore;
             IsGameFromPlayStore = true;
-            Console.WriteLine("Game Install From Play Store");
+            DetectionStatus = $"Google Play / Mod ({playStore.VersionName})";
+            Console.WriteLine("[StardewApkTool] " + DetectionStatus);
+            return true;
+        }
+
+        // 4. Scan all installed packages on the device
+        try
+        {
+            var pm = Application.Context?.PackageManager;
+            if (pm != null)
+            {
+                IList<PackageInfo>? installed = null;
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+                {
+                    try { installed = pm.GetInstalledPackages(PackageManager.PackageInfoFlags.Of(PackageInfoFlagsLong.None)); } catch { }
+                }
+                if (installed == null)
+                {
+                    try { installed = pm.GetInstalledPackages(0); } catch { }
+                }
+
+                if (installed != null)
+                {
+                    var ownPackage = Application.Context?.PackageName;
+
+                    // 4a. Check package names containing 'stardew'
+                    var mod = installed.FirstOrDefault(p =>
+                        !string.IsNullOrEmpty(p.PackageName) &&
+                        !p.PackageName.Equals(ownPackage, StringComparison.OrdinalIgnoreCase) &&
+                        p.PackageName.Contains("stardew", StringComparison.OrdinalIgnoreCase));
+
+                    // 4b. Check application labels containing 'stardew'
+                    if (mod == null)
+                    {
+                        mod = installed.FirstOrDefault(p =>
+                        {
+                            if (string.IsNullOrEmpty(p.PackageName) || p.PackageName.Equals(ownPackage, StringComparison.OrdinalIgnoreCase))
+                                return false;
+                            try
+                            {
+                                var label = pm.GetApplicationLabel(p.ApplicationInfo);
+                                return !string.IsNullOrEmpty(label) && label.Contains("stardew", StringComparison.OrdinalIgnoreCase);
+                            }
+                            catch { return false; }
+                        });
+                    }
+
+                    if (mod != null)
+                    {
+                        _currentPackageInfo = mod;
+                        DetectionStatus = $"Bản Mod ({mod.PackageName} - {mod.VersionName})";
+                        Console.WriteLine("[StardewApkTool] " + DetectionStatus);
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[StardewApkTool] Error scanning installed packages: " + ex.Message);
+        }
+
+        DetectionStatus = "Chưa phát hiện Stardew Valley trên máy";
+        Console.WriteLine("[StardewApkTool] " + DetectionStatus);
+        return false;
+    }
+
+    public static bool SetCustomApk(string apkPath)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(apkPath) || !File.Exists(apkPath))
+                return false;
+
+            var pm = Application.Context?.PackageManager;
+            var archiveInfo = pm?.GetPackageArchiveInfo(apkPath, 0);
+
+            _currentPackageInfo = archiveInfo ?? new PackageInfo
+            {
+                PackageName = "com.custom.stardewvalley",
+                VersionName = "1.6.0.0"
+            };
+
+            CustomApkPath = apkPath;
+            Preferences.Set(PrefKeyCustomApkPath, apkPath);
+            DetectionStatus = $"APK: {Path.GetFileName(apkPath)} (v{CurrentGameVersion})";
+            Console.WriteLine("[StardewApkTool] " + DetectionStatus);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[StardewApkTool] SetCustomApk error: " + ex);
+            return false;
         }
     }
 
-    public static PackageInfo CurrentPackageInfo => _currentPackageInfo;
+    public static void ClearCustomApk()
+    {
+        CustomApkPath = null;
+        try { Preferences.Remove(PrefKeyCustomApkPath); } catch { }
+        DetectGame();
+    }
 
-    public static bool IsInstalled
+    public static bool HasSplitApks =>
+        string.IsNullOrEmpty(CustomApkPath) &&
+        CurrentPackageInfo?.ApplicationInfo?.SplitSourceDirs != null &&
+        CurrentPackageInfo.ApplicationInfo.SplitSourceDirs.Count > 0;
+
+    public static bool IsInstalled =>
+        CurrentPackageInfo != null || (!string.IsNullOrEmpty(CustomApkPath) && File.Exists(CustomApkPath));
+
+    public static string? BaseApkPath
     {
         get
         {
-            if (CurrentPackageInfo == null)
-                return false;
+            if (!string.IsNullOrEmpty(CustomApkPath) && File.Exists(CustomApkPath))
+                return CustomApkPath;
 
-            //play store
-            if (IsGameFromPlayStore)
-            {
-                var version = CurrentPackageInfo.VersionName;
-                var splitApks = CurrentPackageInfo.ApplicationInfo?.SplitSourceDirs;
-                return splitApks?.Count == 2;
-            }
+            var pub = CurrentPackageInfo?.ApplicationInfo?.PublicSourceDir;
+            if (!string.IsNullOrEmpty(pub) && File.Exists(pub))
+                return pub;
 
-            //samsung
-            return true;
+            var src = CurrentPackageInfo?.ApplicationInfo?.SourceDir;
+            if (!string.IsNullOrEmpty(src) && File.Exists(src))
+                return src;
+
+            return pub ?? src;
         }
     }
 
-    public static Android.Content.Context GetContext => Application.Context;
-    public static string? BaseApkPath => CurrentPackageInfo?.ApplicationInfo?.PublicSourceDir;
+    public static bool CanReadApk
+    {
+        get
+        {
+            try
+            {
+                var path = BaseApkPath;
+                if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                    return false;
+
+                using var fs = File.OpenRead(path);
+                return fs.Length > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
     public static string? Arm64ApkPath
     {
         get
         {
             try
             {
+                if (!string.IsNullOrEmpty(CustomApkPath))
+                    return CustomApkPath;
+
                 if (CurrentPackageInfo == null)
                     return null;
 
-                if (IsGameFromPlayStore)
-                    return CurrentPackageInfo.ApplicationInfo.SplitSourceDirs?.FirstOrDefault(path => path.Contains("split_config.arm64"));
+                if (HasSplitApks)
+                {
+                    var arm64 = CurrentPackageInfo.ApplicationInfo?.SplitSourceDirs?
+                        .FirstOrDefault(path => !string.IsNullOrEmpty(path) && (path.Contains("split_config.arm64") || path.Contains("arm64")));
+                    if (!string.IsNullOrEmpty(arm64) && File.Exists(arm64))
+                        return arm64;
+                }
 
-                // Samsung: assemblies are in the base APK
                 return BaseApkPath;
             }
             catch (Exception ex)
             {
                 ErrorDialogTool.Show(ex, "Error try to get Arm64ApkPath");
-                return null;
+                return BaseApkPath;
             }
         }
     }
@@ -92,55 +259,54 @@ internal static class StardewApkTool
         {
             try
             {
+                if (!string.IsNullOrEmpty(CustomApkPath))
+                    return CustomApkPath;
+
                 if (CurrentPackageInfo == null)
                     return null;
 
-                //play store
-                if (IsGameFromPlayStore)
-                    return CurrentPackageInfo.ApplicationInfo.SplitSourceDirs?.First(path => path.Contains("split_content"));
+                if (HasSplitApks)
+                {
+                    var content = CurrentPackageInfo.ApplicationInfo?.SplitSourceDirs?
+                        .FirstOrDefault(path => !string.IsNullOrEmpty(path) && (path.Contains("split_content") || path.Contains("content")));
+                    if (!string.IsNullOrEmpty(content) && File.Exists(content))
+                        return content;
+                }
 
-                //samsung
                 return BaseApkPath;
             }
             catch (Exception ex)
             {
                 ErrorDialogTool.Show(ex, "Error try to get ContentApkPath");
-                return null;
+                return BaseApkPath;
             }
         }
     }
 
-    public static Version GameVersionSupport
-    {
-        get
-        {
-            if (CurrentPackageInfo == null)
-                return null;
+    public static Version GameVersionSupport => new(1, 6, 0, 0);
 
-            switch (CurrentPackageInfo.PackageName)
-            {
-                case GamePlayStorePackageName:
-                    return new(1, 6, 15, 3);
-                case GameGalaxyStorePackageName:
-                    return new(1, 6, 15, 3);
-                default:
-                    return null;
-            }
-        }
-    }
     public static Version CurrentGameVersion
     {
         get
         {
             try
             {
-                return new Version(CurrentPackageInfo?.VersionName);
+                if (CurrentPackageInfo?.VersionName == null)
+                    return new Version(1, 6, 0, 0);
+
+                string rawVer = CurrentPackageInfo.VersionName.Trim();
+                string cleanVer = rawVer.Split(new[] { '-', '_', ' ' }, StringSplitOptions.RemoveEmptyEntries)[0];
+                return Version.TryParse(cleanVer, out var ver) ? ver : new Version(1, 6, 0, 0);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return new Version(0, 0, 0, 0);
+                return new Version(1, 6, 0, 0);
             }
         }
     }
-    public static bool IsGameVersionSupport => CurrentGameVersion >= GameVersionSupport;
+
+    public static bool IsGameVersionSupport =>
+        !string.IsNullOrEmpty(CustomApkPath) ||
+        (CurrentGameVersion.Major >= 1 && CurrentGameVersion.Minor >= 6) ||
+        CurrentGameVersion >= GameVersionSupport;
 }

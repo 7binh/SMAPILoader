@@ -1,6 +1,5 @@
-﻿using Octokit;
+using Octokit;
 using SMAPIGameLoader.Tool;
-using StardewValley.Network;
 using System;
 using System.Collections.Generic;
 using System.IO;

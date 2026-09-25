@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using System;
@@ -21,13 +21,28 @@ internal static class ApkTool
         try
         {
             var ctx = Application.Context;
+            if (ctx?.PackageManager == null)
+                return null;
+
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
-                return ctx.PackageManager.GetPackageInfo(PackageName, PackageManager.PackageInfoFlags.Of(PackageInfoFlagsLong.None));
+            {
+                try
+                {
+                    return ctx.PackageManager.GetPackageInfo(PackageName, PackageManager.PackageInfoFlags.Of(PackageInfoFlagsLong.None));
+                }
+                catch
+                {
+                    return ctx.PackageManager.GetPackageInfo(PackageName, 0);
+                }
+            }
             else
+            {
                 return ctx.PackageManager.GetPackageInfo(PackageName, 0);
+            }
         }
         catch (Exception e)
         {
+            Console.WriteLine($"[ApkTool] GetPackageInfo('{PackageName}') not found or error: {e.Message}");
             return null;
         }
     }
