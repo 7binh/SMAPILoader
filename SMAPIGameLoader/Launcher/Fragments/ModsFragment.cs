@@ -1,9 +1,11 @@
 #nullable enable
 using _Microsoft.Android.Resource.Designer;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Google.Android.Material.Button;
+using Google.Android.Material.FloatingActionButton;
 using SMAPIGameLoader.Tool;
 using System;
 using System.Collections.Generic;
@@ -18,8 +20,12 @@ public class ModsFragment : Fragment
     private ModAdapter? modAdapter;
     private ListView? modsListView;
     private TextView? foundModsText;
-    private MaterialButton? installModBtn;
     private MaterialButton? openFolderModsBtn;
+    private FloatingActionButton? fabAddMod;
+    private MaterialButtonToggleGroup? sortToggleGroup;
+    private MaterialButton? btnSortDefault;
+    private MaterialButton? btnSortDate;
+    private bool sortByNewest = false;
 
     public override View? OnCreateView(LayoutInflater inflater, ViewGroup? container, Bundle? savedInstanceState)
     {
@@ -32,8 +38,56 @@ public class ModsFragment : Fragment
 
         modsListView = view.FindViewById<ListView>(ResourceConstant.Id.modsListViews);
         foundModsText = view.FindViewById<TextView>(ResourceConstant.Id.foundModsText);
-        installModBtn = view.FindViewById<MaterialButton>(ResourceConstant.Id.InstallModBtn);
         openFolderModsBtn = view.FindViewById<MaterialButton>(ResourceConstant.Id.OpenFolderModsBtn);
+        fabAddMod = view.FindViewById<FloatingActionButton>(ResourceConstant.Id.fabAddMod);
+        sortToggleGroup = view.FindViewById<MaterialButtonToggleGroup>(ResourceConstant.Id.sortToggleGroup);
+        btnSortDefault = view.FindViewById<MaterialButton>(ResourceConstant.Id.btnSortDefault);
+        btnSortDate = view.FindViewById<MaterialButton>(ResourceConstant.Id.btnSortDate);
+
+        var prefs = Activity?.GetSharedPreferences("smapi_prefs", FileCreationMode.Private);
+        sortByNewest = prefs?.GetBoolean("mods_sort_by_newest", false) ?? false;
+
+        if (sortToggleGroup != null)
+        {
+            if (sortByNewest)
+            {
+                sortToggleGroup.Check(ResourceConstant.Id.btnSortDate);
+            }
+            else
+            {
+                sortToggleGroup.Check(ResourceConstant.Id.btnSortDefault);
+            }
+        }
+
+        if (btnSortDefault != null)
+        {
+            btnSortDefault.Click += (s, e) =>
+            {
+                try { btnSortDefault.PerformHapticFeedback(FeedbackConstants.ContextClick); } catch { }
+                if (sortByNewest)
+                {
+                    sortByNewest = false;
+                    sortToggleGroup?.Check(ResourceConstant.Id.btnSortDefault);
+                    prefs?.Edit()?.PutBoolean("mods_sort_by_newest", false)?.Apply();
+                    ApplySort();
+                }
+            };
+        }
+
+        if (btnSortDate != null)
+        {
+            btnSortDate.Click += (s, e) =>
+            {
+                try { btnSortDate.PerformHapticFeedback(FeedbackConstants.ContextClick); } catch { }
+                if (!sortByNewest)
+                {
+                    sortByNewest = true;
+                    sortToggleGroup?.Check(ResourceConstant.Id.btnSortDate);
+                    prefs?.Edit()?.PutBoolean("mods_sort_by_newest", true)?.Apply();
+                    ApplySort();
+                }
+            };
+        }
 
         if (Activity != null && modsListView != null)
         {
@@ -46,10 +100,16 @@ public class ModsFragment : Fragment
             };
         }
 
-        if (installModBtn != null)
+        if (fabAddMod != null)
         {
-            installModBtn.Click += async (sender, e) =>
+            fabAddMod.Click += (sender, e) =>
             {
+                try
+                {
+                    fabAddMod.PerformHapticFeedback(FeedbackConstants.ContextClick);
+                }
+                catch { }
+
                 ModInstaller.OnClickInstallMod(OnInstalledCallback: () =>
                 {
                     RefreshMods();
@@ -76,6 +136,27 @@ public class ModsFragment : Fragment
         FileTool.OpenAppFilesExternalFilesDir("Mods");
     }
 
+    private void ApplySort()
+    {
+        if (sortByNewest)
+        {
+            // Sort newest to oldest
+            mods.Sort((a, b) => b.InstalledDate.CompareTo(a.InstalledDate));
+        }
+        else
+        {
+            // Sort alphabetical by name
+            mods.Sort((a, b) => string.Compare(a.modName, b.modName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        for (int i = 0; i < mods.Count; i++)
+        {
+            mods[i].UpdateIndex(i);
+        }
+
+        modAdapter?.RefreshMods();
+    }
+
     public void RefreshMods()
     {
         if (Activity == null || !IsAdded)
@@ -97,7 +178,7 @@ public class ModsFragment : Fragment
                     mods.Add(mod);
                 }
 
-                modAdapter?.RefreshMods();
+                ApplySort();
 
                 if (foundModsText != null)
                 {

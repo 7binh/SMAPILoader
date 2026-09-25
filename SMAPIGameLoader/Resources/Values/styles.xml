@@ -38,4 +38,8 @@
 		<item name="android:statusBarColor">@color/md_theme_background</item>
 		<item name="android:navigationBarColor">@color/md_theme_background</item>
 	</style>
+
+	<style name="ShapeAppearance.SMAPI.Circle" parent="">
+		<item name="cornerSize">50%</item>
+	</style>
 </resources>

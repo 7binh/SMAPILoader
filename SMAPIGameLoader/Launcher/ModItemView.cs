@@ -1,7 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
-using System.Text.Json.Nodes;
 
 namespace SMAPIGameLoader.Launcher;
 
@@ -14,6 +13,7 @@ public class ModItemView
     public readonly string modName = "unknow";
     public readonly string modVersion = "unknow";
     public readonly string modFolderPath = "unknow";
+    public DateTime InstalledDate { get; set; } = DateTime.MinValue;
 
     public ModItemView(string manifestFilePath, int modListIndex)
     {
@@ -22,24 +22,46 @@ public class ModItemView
             var manifestText = File.ReadAllText(manifestFilePath);
             var manifest = JObject.Parse(manifestText);
 
-            this.modName = manifest["Name"].ToString();
-            this.modVersion = manifest["Version"].ToString();
+            this.modName = manifest["Name"]?.ToString() ?? "Unknown";
+            this.modVersion = manifest["Version"]?.ToString() ?? "Unknown";
 
-            this.NameText = $"[{modListIndex + 1}]: {modName}";
-            this.VersionText = $"Version: {modVersion}";
+            this.modFolderPath = Path.GetDirectoryName(manifestFilePath) ?? string.Empty;
+            
+            var modsIndex = modFolderPath.IndexOf("/Mods", StringComparison.OrdinalIgnoreCase);
+            if (modsIndex < 0)
+                modsIndex = modFolderPath.IndexOf("\\Mods", StringComparison.OrdinalIgnoreCase);
 
-            this.modFolderPath = Path.GetDirectoryName(manifestFilePath);
-            var relativeModDir = modFolderPath.Substring(modFolderPath.IndexOf("/Mods") + 5);
+            var relativeModDir = modsIndex >= 0 ? modFolderPath.Substring(modsIndex + 5) : modFolderPath;
             FolderPathText = $"Folder: {relativeModDir}";
+
+            DateTime date = DateTime.MinValue;
+            if (!string.IsNullOrEmpty(modFolderPath) && Directory.Exists(modFolderPath))
+            {
+                var dirWrite = Directory.GetLastWriteTime(modFolderPath);
+                var dirCreate = Directory.GetCreationTime(modFolderPath);
+                date = dirWrite > dirCreate ? dirWrite : dirCreate;
+            }
+            if (File.Exists(manifestFilePath))
+            {
+                var fileWrite = File.GetLastWriteTime(manifestFilePath);
+                if (fileWrite > date)
+                    date = fileWrite;
+            }
+            InstalledDate = date;
         }
         catch (Exception ex)
         {
-            this.modFolderPath = Path.GetDirectoryName(manifestFilePath);
+            this.modFolderPath = Path.GetDirectoryName(manifestFilePath) ?? string.Empty;
             FolderPathText = modFolderPath;
             ErrorDialogTool.Show(ex, "Error try parser mod folder path: " + this.modFolderPath);
         }
 
-        this.NameText = $"[{modListIndex + 1}]: {modName}";
+        UpdateIndex(modListIndex);
         this.VersionText = $"Version: {modVersion}";
+    }
+
+    public void UpdateIndex(int newIndex)
+    {
+        this.NameText = $"[{newIndex + 1}]: {modName}";
     }
 }
