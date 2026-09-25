@@ -198,16 +198,13 @@ public class ModsFragment : Fragment
             return;
 
         var mod = modAdapter.GetModOnClick(e);
-        var text = new StringBuilder();
-        text.AppendLine($"Mod: {mod.NameText}");
-        text.AppendLine($"{mod.VersionText}");
-        text.AppendLine();
-        text.AppendLine("Bạn có muốn xóa mod này không?");
-        DialogTool.Show(
-            "❌ Xóa: " + mod.NameText,
-            text.ToString(),
-            buttonOKName: "Xóa mod",
-            onClickYes: () =>
+        if (mod == null)
+            return;
+
+        DialogTool.ConfirmDelete(
+            mod.modName,
+            $"Phiên bản: {mod.modVersion}\n{mod.FolderPathText}",
+            onConfirmDelete: () =>
             {
                 OnClickDeleteMod(mod);
             }

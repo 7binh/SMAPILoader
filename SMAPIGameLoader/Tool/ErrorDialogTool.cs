@@ -1,4 +1,6 @@
-﻿using Android.App;
+#nullable enable
+using Android.App;
+using Google.Android.Material.Dialog;
 using SMAPIGameLoader.Tool;
 using System;
 using Xamarin.Essentials;
@@ -7,36 +9,32 @@ namespace SMAPIGameLoader;
 
 internal static class ErrorDialogTool
 {
-    // you will got error when you alert.Show() & Finish() it
-    //example case
-    // android.view.WindowLeaked: Activity crc644389b739a03c2b33.SMAPIActivity has leaked window DecorView@fd80140[Error Dialog] that was originally added here
-    public static void Show(Exception exception, string title = "Exception Dialog")
+    public static void Show(Exception? exception, string title = "Đã xảy ra lỗi")
     {
-
-        if (exception is null)
+        if (exception == null)
             return;
 
         Console.WriteLine("try show error dialog: " + exception);
 
-        if (MainThread.IsMainThread == false)
+        TaskTool.RunMainThread(() =>
         {
-            TaskTool.RunMainThread(() =>
-            {
-                Show(exception, title);
-            });
-            return;
-        }
+            var activity = ActivityTool.CurrentActivity;
+            if (activity == null || activity.IsFinishing || activity.IsDestroyed)
+                return;
 
-        var dialog = new AlertDialog.Builder(ActivityTool.CurrentActivity);
-        var alert = dialog.Create();
-        alert.SetTitle(title);
-        alert.SetMessage(exception.ToString());
-        alert.SetButton("OK", (c, ev) =>
-        {
-            // Ok button click task  
+            string errorDetails = exception.ToString();
+            Clipboard.SetTextAsync(errorDetails);
+
+            new MaterialAlertDialogBuilder(activity)
+                .SetTitle(title)
+                .SetMessage($"{exception.Message}\n\n(Chi tiết lỗi đã được tự động lưu vào bộ nhớ tạm clipboard)")
+                .SetPositiveButton("Đóng", (s, e) => { })
+                .SetNeutralButton("Sao chép lại", (s, e) =>
+                {
+                    Clipboard.SetTextAsync(errorDetails);
+                    ToastNotifyTool.Notify("Đã sao chép chi tiết lỗi vào clipboard");
+                })
+                .Show();
         });
-        alert.Show();
-
-        Clipboard.SetTextAsync(exception.ToString());
     }
 }
