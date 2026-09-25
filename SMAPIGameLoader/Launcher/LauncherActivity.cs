@@ -1,14 +1,23 @@
 #nullable enable
-using System;
-using System.Text;
 using _Microsoft.Android.Resource.Designer;
 using Android.App;
 using Android.Content.PM;
+using Android.Content.Res;
+using Android.Graphics;
 using Android.OS;
+using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
+using AndroidX.Core.Content;
+using AndroidX.Core.View;
+using AndroidX.Fragment.App;
+using AndroidX.ViewPager2.Adapter;
+using AndroidX.ViewPager2.Widget;
+using SMAPIGameLoader.Launcher.Fragments;
 using SMAPIGameLoader.Tool;
+using System;
 using Xamarin.Essentials;
+using Fragment = AndroidX.Fragment.App.Fragment;
 
 namespace SMAPIGameLoader.Launcher;
 
@@ -22,14 +31,37 @@ namespace SMAPIGameLoader.Launcher;
 )]
 public class LauncherActivity : AppCompatActivity
 {
-    public static LauncherActivity Instance { get; private set; }
+    public static LauncherActivity Instance { get; private set; } = null!;
 
     private static bool IsDeviceSupport => IntPtr.Size == 8;
+
+    private ViewPager2? mainViewPager;
+    private LinearLayout? tabHome;
+    private LinearLayout? tabMods;
+    private LinearLayout? tabTools;
+
+    private LinearLayout? tabHomeIndicator;
+    private LinearLayout? tabModsIndicator;
+    private LinearLayout? tabToolsIndicator;
+
+    private ImageView? tabHomeIcon;
+    private ImageView? tabModsIcon;
+    private ImageView? tabToolsIcon;
+
+    private TextView? tabHomeText;
+    private TextView? tabModsText;
+    private TextView? tabToolsText;
+
+    private int colorActive;
+    private int colorInactive;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         Instance = this;
         base.OnCreate(savedInstanceState);
+
+        // Edge-to-Edge window
+        WindowCompat.SetDecorFitsSystemWindows(Window!, false);
 
         SetContentView(ResourceConstant.Layout.LauncherLayout);
 
@@ -39,9 +71,9 @@ public class LauncherActivity : AppCompatActivity
         // Assert device architecture
         AssertRequirement();
 
-        // Setup layout and event bindings
-        OnReadyToSetupLayoutPage();
         SetDarkMode();
+        SetupViews();
+        SetupViewPager();
 
         // Run utils scripts
         ProcessAdbExtras();
@@ -52,192 +84,161 @@ public class LauncherActivity : AppCompatActivity
         AppCompatDelegate.DefaultNightMode = AppCompatDelegate.ModeNightYes;
     }
 
-    /// <summary>
-    ///     Receive argument launch activity
-    /// </summary>
-    private void ProcessAdbExtras()
-    {
-        if (AdbExtraTool.IsClickStartGame(this))
-        {
-            OnClickStartGame();
-        }
-    }
-
     private void AssertRequirement()
     {
-        // Check if 32bit device
         if (IsDeviceSupport is false)
         {
             ToastNotifyTool.Notify("Không hỗ trợ thiết bị 32-bit (chỉ hỗ trợ 64-bit)");
             Finish();
-            return;
         }
-
-        // We do not call Finish() here if game is not detected.
-        // The user will be guided via the UI to rescan or select an APK manually.
     }
 
-    private void OnReadyToSetupLayoutPage()
+    private void ProcessAdbExtras()
     {
-        // Setup event bindings
-        try
+        if (AdbExtraTool.IsClickStartGame(this))
         {
-            FindViewById<Button>(ResourceConstant.Id.InstallSMAPIZip).Click += SMAPIInstaller.OnClickInstallSMAPIZip;
-            FindViewById<Button>(ResourceConstant.Id.UploadLog).Click += LogParser.OnClickUploadLog;
-
-            var startGameBtn = FindViewById<Button>(ResourceConstant.Id.StartGame);
-            startGameBtn.Click += (sender, e) => { OnClickStartGame(); };
-
-            var modManagerBtn = FindViewById<Button>(ResourceConstant.Id.ModManagerBtn);
-            modManagerBtn.Click += (sender, e) => { ActivityTool.SwapActivity<ModManagerActivity>(this, false); };
-
-            var selectApkBtn = FindViewById<Button>(ResourceConstant.Id.SelectApkBtn);
-            if (selectApkBtn != null)
+            if (StardewApkTool.IsInstalled && StardewApkTool.CanReadApk)
             {
-                selectApkBtn.Click += OnClickSelectApk;
+                EntryGame.LaunchGameActivity(this);
             }
-
-            var rescanBtn = FindViewById<Button>(ResourceConstant.Id.RescanGameBtn);
-            if (rescanBtn != null)
-            {
-                rescanBtn.Click += OnClickRescanGame;
-            }
-
-            SMAPIInstaller.OnInstalledSMAPI += NotifyInstalledSMAPIInfo;
         }
-        catch (Exception ex)
-        {
-            ToastNotifyTool.Notify("Error: Try to setup bind UI Event");
-            ErrorDialogTool.Show(ex);
-            return;
-        }
-
-        // Refresh UI state
-        RefreshLauncherInfo();
-        NotifyInstalledSMAPIInfo();
     }
 
-    public void RefreshLauncherInfo()
+    private void SetupViews()
     {
-        try
+        mainViewPager = FindViewById<ViewPager2>(ResourceConstant.Id.mainViewPager);
+
+        tabHome = FindViewById<LinearLayout>(ResourceConstant.Id.tabHome);
+        tabMods = FindViewById<LinearLayout>(ResourceConstant.Id.tabMods);
+        tabTools = FindViewById<LinearLayout>(ResourceConstant.Id.tabTools);
+
+        tabHomeIndicator = FindViewById<LinearLayout>(ResourceConstant.Id.tabHomeIndicator);
+        tabModsIndicator = FindViewById<LinearLayout>(ResourceConstant.Id.tabModsIndicator);
+        tabToolsIndicator = FindViewById<LinearLayout>(ResourceConstant.Id.tabToolsIndicator);
+
+        tabHomeIcon = FindViewById<ImageView>(ResourceConstant.Id.tabHomeIcon);
+        tabModsIcon = FindViewById<ImageView>(ResourceConstant.Id.tabModsIcon);
+        tabToolsIcon = FindViewById<ImageView>(ResourceConstant.Id.tabToolsIcon);
+
+        tabHomeText = FindViewById<TextView>(ResourceConstant.Id.tabHomeText);
+        tabModsText = FindViewById<TextView>(ResourceConstant.Id.tabModsText);
+        tabToolsText = FindViewById<TextView>(ResourceConstant.Id.tabToolsText);
+
+        colorActive = ContextCompat.GetColor(this, ResourceConstant.Color.md_theme_onSecondaryContainer);
+        colorInactive = ContextCompat.GetColor(this, ResourceConstant.Color.md_theme_onSurfaceVariant);
+
+        if (tabHome != null)
         {
-            var launcherInfoLines = new StringBuilder();
-            launcherInfoLines.AppendLine("Launcher Version: " + AppInfo.VersionString);
-
-            var buildDateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(int.Parse(AppInfo.BuildString));
-            var localDateTimeOffset = buildDateTimeOffset.ToLocalTime();
-            var localDateTimeString = localDateTimeOffset.ToString("HH:mm:ss dd/MM/yyyy");
-            launcherInfoLines.AppendLine($"Build: {localDateTimeString} (d/m/y)");
-            launcherInfoLines.AppendLine("Support: Stardew Valley 1.6+ (CH Play / Galaxy / Mod APK)");
-
-            if (StardewApkTool.IsInstalled)
+            tabHome.Click += (s, e) =>
             {
-                launcherInfoLines.AppendLine($"Trạng thái game: Đã phát hiện ({StardewApkTool.DetectionStatus})");
-                launcherInfoLines.AppendLine($"Phiên bản: {StardewApkTool.CurrentGameVersion}");
-                if (StardewApkTool.CurrentPackageInfo != null)
-                {
-                    launcherInfoLines.AppendLine("Package: " + StardewApkTool.CurrentPackageInfo.PackageName);
-                }
+                tabHome.PerformHapticFeedback(FeedbackConstants.ContextClick);
+                mainViewPager?.SetCurrentItem(0, true);
+            };
+        }
 
-                if (StardewApkTool.CanReadApk)
-                {
-                    launcherInfoLines.AppendLine("Đọc file APK: OK (Sẵn sàng khởi chạy)");
-                }
-                else
-                {
-                    launcherInfoLines.AppendLine("⚠️ Cảnh báo: Quyền đọc file APK bị chặn bởi hệ thống. Vui lòng bấm 'Chọn file APK' bên dưới để nạp trực tiếp!");
-                }
+        if (tabMods != null)
+        {
+            tabMods.Click += (s, e) =>
+            {
+                tabMods.PerformHapticFeedback(FeedbackConstants.ContextClick);
+                mainViewPager?.SetCurrentItem(1, true);
+            };
+        }
+
+        if (tabTools != null)
+        {
+            tabTools.Click += (s, e) =>
+            {
+                tabTools.PerformHapticFeedback(FeedbackConstants.ContextClick);
+                mainViewPager?.SetCurrentItem(2, true);
+            };
+        }
+    }
+
+    private void SetupViewPager()
+    {
+        if (mainViewPager == null)
+            return;
+
+        var adapter = new LauncherPagerAdapter(this);
+        mainViewPager.Adapter = adapter;
+        mainViewPager.OffscreenPageLimit = 2;
+
+        mainViewPager.RegisterOnPageChangeCallback(new PageChangeCallback(this));
+        UpdateTabSelection(0);
+    }
+
+    public void UpdateTabSelection(int position)
+    {
+        // Tab 0: Home
+        SetTabState(tabHomeIndicator, tabHomeIcon, tabHomeText, position == 0);
+
+        // Tab 1: Mods
+        SetTabState(tabModsIndicator, tabModsIcon, tabModsText, position == 1);
+
+        // Tab 2: Tools
+        SetTabState(tabToolsIndicator, tabToolsIcon, tabToolsText, position == 2);
+    }
+
+    private void SetTabState(LinearLayout? indicator, ImageView? icon, TextView? text, bool isActive)
+    {
+        if (indicator != null)
+        {
+            if (isActive)
+            {
+                indicator.SetBackgroundResource(ResourceConstant.Drawable.pill_tab_background);
             }
             else
             {
-                launcherInfoLines.AppendLine("⚠️ Trạng thái game: Chưa phát hiện Stardew Valley!");
-                launcherInfoLines.AppendLine("• Hãy cài đặt game hoặc bấm 'Chọn file APK' để nạp file .apk.");
+                indicator.Background = null;
             }
-
-            launcherInfoLines.AppendLine("Discord: Stardew SMAPI Thailand");
-            launcherInfoLines.AppendLine("Developer: NRTnarathip, Eky-Team");
-
-            FindViewById<TextView>(ResourceConstant.Id.launcherInfoTextView).Text = launcherInfoLines.ToString();
         }
-        catch (Exception ex)
+
+        int color = isActive ? colorActive : colorInactive;
+
+        if (icon != null)
         {
-            ToastNotifyTool.Notify("Error setup app text info: " + ex);
-            ErrorDialogTool.Show(ex);
+            icon.SetColorFilter(new Color(color), PorterDuff.Mode.SrcIn);
+        }
+
+        if (text != null)
+        {
+            text.SetTextColor(new Color(color));
+            text.Typeface = isActive ? Typeface.DefaultBold : Typeface.Default;
         }
     }
 
-    private async void OnClickSelectApk(object? sender, EventArgs e)
+    private class PageChangeCallback : ViewPager2.OnPageChangeCallback
     {
-        try
-        {
-            var pick = await FilePickerTool.PickApkFile("Chọn file Stardew Valley (.apk)");
-            if (pick == null)
-                return;
+        private readonly LauncherActivity activity;
 
-            ToastNotifyTool.Notify("Đang nạp file APK: " + pick.FileName);
-            string? copiedPath = await FilePickerTool.CopyFileToInternalStorage(pick, "custom_stardew.apk");
-            if (copiedPath != null && StardewApkTool.SetCustomApk(copiedPath))
+        public PageChangeCallback(LauncherActivity activity)
+        {
+            this.activity = activity;
+        }
+
+        public override void OnPageSelected(int position)
+        {
+            base.OnPageSelected(position);
+            activity.UpdateTabSelection(position);
+        }
+    }
+
+    private class LauncherPagerAdapter : FragmentStateAdapter
+    {
+        public LauncherPagerAdapter(FragmentActivity activity) : base(activity) { }
+
+        public override int ItemCount => 3;
+
+        public override Fragment CreateFragment(int position)
+        {
+            return position switch
             {
-                ToastNotifyTool.Notify("Đã nhận diện file APK thành công!");
-                RefreshLauncherInfo();
-            }
-            else
-            {
-                ToastNotifyTool.Notify("Không thể đọc thông tin từ file APK đã chọn.");
-            }
+                0 => new HomeFragment(),
+                1 => new ModsFragment(),
+                2 => new ToolsFragment(),
+                _ => new HomeFragment()
+            };
         }
-        catch (Exception ex)
-        {
-            ToastNotifyTool.Notify("Lỗi chọn APK: " + ex.Message);
-            ErrorDialogTool.Show(ex);
-        }
-    }
-
-    private void OnClickRescanGame(object? sender, EventArgs e)
-    {
-        StardewApkTool.DetectGame();
-        RefreshLauncherInfo();
-        if (StardewApkTool.IsInstalled)
-        {
-            ToastNotifyTool.Notify("Đã tìm thấy game: " + StardewApkTool.DetectionStatus);
-        }
-        else
-        {
-            ToastNotifyTool.Notify("Vẫn chưa tìm thấy game. Vui lòng kiểm tra lại hoặc bấm 'Chọn file APK'.");
-        }
-    }
-
-    private void NotifyInstalledSMAPIInfo()
-    {
-        var smapiInstallInfo = FindViewById<TextView>(ResourceConstant.Id.SMAPIInstallInfoTextView);
-        if (SMAPIInstaller.IsInstalled is false)
-        {
-            smapiInstallInfo.Text = "Please install SMAPI!!";
-            return;
-        }
-
-        var lines = new StringBuilder();
-        lines.AppendLine($"SMAPI Version: {SMAPIInstaller.GetCurrentVersion()}");
-        lines.AppendLine($"SMAPI Build: {SMAPIInstaller.GetBuildCode()}");
-        smapiInstallInfo.Text = lines.ToString();
-    }
-
-    private void OnClickStartGame()
-    {
-        if (!StardewApkTool.IsInstalled)
-        {
-            ToastNotifyTool.Notify("Chưa tìm thấy game Stardew Valley. Vui lòng cài đặt game hoặc bấm 'Chọn file APK'.");
-            return;
-        }
-
-        if (!StardewApkTool.CanReadApk)
-        {
-            ToastNotifyTool.Notify("Không thể đọc trực tiếp APK của game. Vui lòng bấm 'Chọn file APK' để nạp file .apk!");
-            return;
-        }
-
-        Console.WriteLine("On click start game");
-        EntryGame.LaunchGameActivity(this);
-        Console.WriteLine("done continue UI runner");
     }
 }

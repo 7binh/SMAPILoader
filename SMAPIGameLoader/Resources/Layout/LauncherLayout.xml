@@ -1,193 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<FrameLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/rootContainer"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:fillViewport="true"
 	android:background="?attr/android:colorBackground">
 
-	<LinearLayout
-		android:orientation="vertical"
+	<!-- Layer 1: ViewPager2 containing Fragments -->
+	<androidx.viewpager2.widget.ViewPager2
+		android:id="@+id/mainViewPager"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:paddingHorizontal="20dp"
-		android:paddingTop="36dp"
-		android:paddingBottom="24dp">
+		android:layout_height="match_parent" />
 
-		<!-- App Header -->
+	<!-- Layer 2: Bottom Scrim (Gradient Fade) -->
+	<View
+		android:id="@+id/bottomScrim"
+		android:layout_width="match_parent"
+		android:layout_height="110dp"
+		android:layout_gravity="bottom"
+		android:background="@drawable/bottom_scrim"
+		android:clickable="false"
+		android:focusable="false" />
+
+	<!-- Layer 3: Floating Pill Navigation Bar -->
+	<com.google.android.material.card.MaterialCardView
+		android:id="@+id/floatingPillBar"
+		android:layout_width="match_parent"
+		android:layout_height="64dp"
+		android:layout_gravity="bottom|center_horizontal"
+		android:layout_marginBottom="20dp"
+		android:layout_marginHorizontal="24dp"
+		app:cardCornerRadius="32dp"
+		app:cardElevation="6dp"
+		app:strokeWidth="1dp"
+		app:strokeColor="@color/md_theme_outlineVariant"
+		app:cardBackgroundColor="@color/md_theme_surfaceContainerHigh">
+
 		<LinearLayout
 			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
+			android:layout_height="match_parent"
+			android:orientation="horizontal"
 			android:gravity="center"
-			android:layout_marginBottom="20dp">
+			android:paddingHorizontal="6dp"
+			android:paddingVertical="4dp">
 
-			<ImageView
-				android:layout_width="64dp"
-				android:layout_height="64dp"
-				android:src="@drawable/icon"
-				android:contentDescription="SMAPI Icon"
-				android:layout_marginBottom="12dp" />
-
-			<TextView
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="SMAPI Launcher"
-				android:textSize="24sp"
-				android:fontFamily="sans-serif-medium"
-				android:textColor="?attr/colorOnSurface"
-				android:gravity="center" />
-
-			<TextView
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="Stardew Valley Modding Platform"
-				android:textSize="14sp"
-				android:fontFamily="sans-serif"
-				android:textColor="?attr/colorOnSurfaceVariant"
-				android:gravity="center"
-				android:layout_marginTop="2dp" />
-		</LinearLayout>
-
-		<!-- Info Card -->
-		<com.google.android.material.card.MaterialCardView
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginBottom="24dp"
-			app:cardCornerRadius="20dp"
-			app:cardElevation="0dp"
-			app:strokeWidth="1dp"
-			app:strokeColor="?attr/colorOutlineVariant"
-			app:cardBackgroundColor="?attr/colorSurfaceContainer">
-
+			<!-- Tab 1: Home -->
 			<LinearLayout
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
+				android:id="@+id/tabHome"
+				android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:gravity="center"
 				android:orientation="vertical"
-				android:padding="20dp">
+				android:clickable="true"
+				android:focusable="true">
+
+				<LinearLayout
+					android:id="@+id/tabHomeIndicator"
+					android:layout_width="wrap_content"
+					android:layout_height="32dp"
+					android:paddingHorizontal="16dp"
+					android:gravity="center"
+					android:background="@drawable/pill_tab_background">
+
+					<ImageView
+						android:id="@+id/tabHomeIcon"
+						android:layout_width="20dp"
+						android:layout_height="20dp"
+						android:src="@drawable/ic_nav_home"
+						app:tint="@color/md_theme_onSecondaryContainer"
+						android:contentDescription="Trang chủ" />
+				</LinearLayout>
 
 				<TextView
+					android:id="@+id/tabHomeText"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="DEVICE &amp; GAME STATUS"
+					android:text="Trang chủ"
 					android:textSize="11sp"
-					android:letterSpacing="0.08"
-					android:textAllCaps="true"
-					android:textStyle="bold"
-					android:textColor="?attr/colorPrimary"
-					android:layout_marginBottom="8dp" />
-
-				<TextView
-					android:id="@+id/launcherInfoTextView"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:textSize="13sp"
-					android:lineSpacingMultiplier="1.2"
-					android:textColor="?attr/colorOnSurfaceVariant"
-					android:text="Loading launcher info..." />
-
-				<View
-					android:layout_width="match_parent"
-					android:layout_height="1dp"
-					android:background="?attr/colorOutlineVariant"
-					android:layout_marginVertical="12dp" />
-
-				<TextView
-					android:id="@+id/SMAPIInstallInfoTextView"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:textSize="14sp"
+					android:textColor="@color/md_theme_onSecondaryContainer"
 					android:fontFamily="sans-serif-medium"
-					android:textColor="?attr/colorPrimary"
-					android:text="Checking SMAPI..." />
-
-				<!-- Secondary Actions for Stardew APK detection -->
-				<LinearLayout
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:orientation="horizontal"
-					android:layout_marginTop="14dp">
-
-					<com.google.android.material.button.MaterialButton
-						android:id="@+id/SelectApkBtn"
-						style="@style/Widget.Material3.Button.OutlinedButton"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:layout_height="44dp"
-						android:text="Chọn file APK"
-						android:textSize="13sp"
-						app:cornerRadius="22dp"
-						android:textAllCaps="false"
-						android:layout_marginEnd="6dp" />
-
-					<com.google.android.material.button.MaterialButton
-						android:id="@+id/RescanGameBtn"
-						style="@style/Widget.Material3.Button.OutlinedButton"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:layout_height="44dp"
-						android:text="Quét lại game"
-						android:textSize="13sp"
-						app:cornerRadius="22dp"
-						android:textAllCaps="false"
-						android:layout_marginStart="6dp" />
-				</LinearLayout>
+					android:layout_marginTop="2dp" />
 			</LinearLayout>
-		</com.google.android.material.card.MaterialCardView>
 
-		<!-- Actions -->
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:gravity="center">
+			<!-- Tab 2: Mods -->
+			<LinearLayout
+				android:id="@+id/tabMods"
+				android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:gravity="center"
+				android:orientation="vertical"
+				android:clickable="true"
+				android:focusable="true">
 
-			<com.google.android.material.button.MaterialButton
-				android:id="@+id/StartGame"
-				style="@style/Widget.Material3.Button"
-				android:layout_width="match_parent"
-				android:layout_height="56dp"
-				android:text="Start Game"
-				android:textSize="16sp"
-				android:fontFamily="sans-serif-medium"
-				app:cornerRadius="28dp"
-				android:textAllCaps="false"
-				android:layout_marginBottom="12dp" />
+				<LinearLayout
+					android:id="@+id/tabModsIndicator"
+					android:layout_width="wrap_content"
+					android:layout_height="32dp"
+					android:paddingHorizontal="16dp"
+					android:gravity="center">
 
-			<com.google.android.material.button.MaterialButton
-				android:id="@+id/InstallSMAPIZip"
-				style="@style/Widget.Material3.Button.TonalButton"
-				android:layout_width="match_parent"
-				android:layout_height="52dp"
-				android:text="Install SMAPI From Zip"
-				android:textSize="15sp"
-				app:cornerRadius="26dp"
-				android:textAllCaps="false"
-				android:layout_marginBottom="12dp" />
+					<ImageView
+						android:id="@+id/tabModsIcon"
+						android:layout_width="20dp"
+						android:layout_height="20dp"
+						android:src="@drawable/ic_nav_mods"
+						app:tint="@color/md_theme_onSurfaceVariant"
+						android:contentDescription="Mods" />
+				</LinearLayout>
 
-			<com.google.android.material.button.MaterialButton
-				android:id="@+id/ModManagerBtn"
-				style="@style/Widget.Material3.Button.TonalButton"
-				android:layout_width="match_parent"
-				android:layout_height="52dp"
-				android:text="Mod Manager"
-				android:textSize="15sp"
-				app:cornerRadius="26dp"
-				android:textAllCaps="false"
-				android:layout_marginBottom="12dp" />
+				<TextView
+					android:id="@+id/tabModsText"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Mods"
+					android:textSize="11sp"
+					android:textColor="@color/md_theme_onSurfaceVariant"
+					android:fontFamily="sans-serif"
+					android:layout_marginTop="2dp" />
+			</LinearLayout>
 
-			<com.google.android.material.button.MaterialButton
-				android:id="@+id/UploadLog"
-				style="@style/Widget.Material3.Button.OutlinedButton"
-				android:layout_width="match_parent"
-				android:layout_height="50dp"
-				android:text="Share SMAPI Log"
-				android:textSize="15sp"
-				app:cornerRadius="25dp"
-				android:textAllCaps="false"
-				android:layout_marginBottom="16dp" />
+			<!-- Tab 3: Tools -->
+			<LinearLayout
+				android:id="@+id/tabTools"
+				android:layout_width="0dp"
+				android:layout_height="match_parent"
+				android:layout_weight="1"
+				android:gravity="center"
+				android:orientation="vertical"
+				android:clickable="true"
+				android:focusable="true">
+
+				<LinearLayout
+					android:id="@+id/tabToolsIndicator"
+					android:layout_width="wrap_content"
+					android:layout_height="32dp"
+					android:paddingHorizontal="16dp"
+					android:gravity="center">
+
+					<ImageView
+						android:id="@+id/tabToolsIcon"
+						android:layout_width="20dp"
+						android:layout_height="20dp"
+						android:src="@drawable/ic_nav_tools"
+						app:tint="@color/md_theme_onSurfaceVariant"
+						android:contentDescription="Công cụ" />
+				</LinearLayout>
+
+				<TextView
+					android:id="@+id/tabToolsText"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Công cụ"
+					android:textSize="11sp"
+					android:textColor="@color/md_theme_onSurfaceVariant"
+					android:fontFamily="sans-serif"
+					android:layout_marginTop="2dp" />
+			</LinearLayout>
 
 		</LinearLayout>
-	</LinearLayout>
-</ScrollView>
+	</com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>
