@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fillViewport="true"
+	android:paddingBottom="108dp"
+	android:clipToPadding="false">
+
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingTop="36dp">
+
+		<!-- Tools Header -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:layout_marginBottom="24dp">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Công cụ &amp; Tiện ích"
+				android:textSize="24sp"
+				android:fontFamily="sans-serif-medium"
+				android:textColor="?attr/colorOnSurface" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Quản lý SMAPI, dữ liệu lưu và nhật ký hệ thống"
+				android:textSize="14sp"
+				android:textColor="?attr/colorOnSurfaceVariant"
+				android:layout_marginTop="2dp" />
+		</LinearLayout>
+
+		<!-- Card 1: SMAPI Platform -->
+		<com.google.android.material.card.MaterialCardView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp"
+			app:cardCornerRadius="20dp"
+			app:cardElevation="0dp"
+			app:strokeWidth="1dp"
+			app:strokeColor="?attr/colorOutlineVariant"
+			app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:padding="20dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="NỀN TẢNG SMAPI"
+					android:textSize="12sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorPrimary"
+					android:letterSpacing="0.08"
+					android:layout_marginBottom="8dp" />
+
+				<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Cài đặt hoặc cập nhật phiên bản SMAPI Android mới nhất từ file zip tải về."
+					android:textSize="13sp"
+					android:textColor="?attr/colorOnSurfaceVariant"
+					android:layout_marginBottom="16dp" />
+
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/InstallSMAPIZip"
+					style="@style/Widget.Material3.Button.TonalButton"
+					android:layout_width="match_parent"
+					android:layout_height="50dp"
+					android:text="Cài đặt SMAPI từ file Zip"
+					android:textSize="14sp"
+					android:textAllCaps="false"
+					app:cornerRadius="16dp" />
+			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+
+		<!-- Card 2: Logs & Diagnostics -->
+		<com.google.android.material.card.MaterialCardView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp"
+			app:cardCornerRadius="20dp"
+			app:cardElevation="0dp"
+			app:strokeWidth="1dp"
+			app:strokeColor="?attr/colorOutlineVariant"
+			app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:padding="20dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="NHẬT KÝ &amp; GỠ LỖI"
+					android:textSize="12sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorPrimary"
+					android:letterSpacing="0.08"
+					android:layout_marginBottom="8dp" />
+
+				<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Tự động trích xuất log khởi động và lỗi gửi lên máy chủ smapi.io để phân tích sự cố."
+					android:textSize="13sp"
+					android:textColor="?attr/colorOnSurfaceVariant"
+					android:layout_marginBottom="16dp" />
+
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/UploadLog"
+					style="@style/Widget.Material3.Button.OutlinedButton"
+					android:layout_width="match_parent"
+					android:layout_height="50dp"
+					android:text="Chia sẻ / Tải lên SMAPI Log"
+					android:textSize="14sp"
+					android:textAllCaps="false"
+					app:cornerRadius="16dp" />
+			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+
+		<!-- Card 3: Data & Storage -->
+		<com.google.android.material.card.MaterialCardView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="24dp"
+			app:cardCornerRadius="20dp"
+			app:cardElevation="0dp"
+			app:strokeWidth="1dp"
+			app:strokeColor="?attr/colorOutlineVariant"
+			app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:padding="20dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="DỮ LIỆU &amp; SAO LƯU"
+					android:textSize="12sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorPrimary"
+					android:letterSpacing="0.08"
+					android:layout_marginBottom="8dp" />
+
+				<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Nhập nhanh dữ liệu lưu Saves.zip hoặc dọn dẹp bộ nhớ cache để giải phóng dung lượng."
+					android:textSize="13sp"
+					android:textColor="?attr/colorOnSurfaceVariant"
+					android:layout_marginBottom="16dp" />
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal">
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/ImportSaveZipBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_height="48dp"
+						android:layout_weight="1"
+						android:text="Nhập Save Zip"
+						android:textSize="13sp"
+						android:textAllCaps="false"
+						android:layout_marginEnd="6dp"
+						app:cornerRadius="14dp" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/ClearCacheBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_height="48dp"
+						android:layout_weight="1"
+						android:text="Dọn Cache"
+						android:textSize="13sp"
+						android:textAllCaps="false"
+						android:layout_marginStart="6dp"
+						app:cornerRadius="14dp" />
+				</LinearLayout>
+			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+
+	</LinearLayout>
+</androidx.core.widget.NestedScrollView>

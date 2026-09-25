@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fillViewport="true"
+	android:paddingBottom="108dp"
+	android:clipToPadding="false">
+
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="20dp"
+		android:paddingTop="36dp">
+
+		<!-- App Header -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:gravity="center"
+			android:layout_marginBottom="20dp">
+
+			<ImageView
+				android:layout_width="64dp"
+				android:layout_height="64dp"
+				android:src="@drawable/icon"
+				android:contentDescription="SMAPI Icon"
+				android:layout_marginBottom="12dp" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="SMAPI Launcher"
+				android:textSize="24sp"
+				android:fontFamily="sans-serif-medium"
+				android:textColor="?attr/colorOnSurface"
+				android:gravity="center" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Stardew Valley Modding Platform"
+				android:textSize="14sp"
+				android:fontFamily="sans-serif"
+				android:textColor="?attr/colorOnSurfaceVariant"
+				android:gravity="center"
+				android:layout_marginTop="2dp" />
+		</LinearLayout>
+
+		<!-- Status Card -->
+		<com.google.android.material.card.MaterialCardView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="20dp"
+			app:cardCornerRadius="20dp"
+			app:cardElevation="0dp"
+			app:strokeWidth="1dp"
+			app:strokeColor="?attr/colorOutlineVariant"
+			app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:padding="20dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="DEVICE &amp; GAME STATUS"
+					android:textSize="12sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorPrimary"
+					android:letterSpacing="0.08"
+					android:layout_marginBottom="12dp" />
+
+				<TextView
+					android:id="@+id/launcherInfoTextView"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Launcher Info..."
+					android:textSize="13sp"
+					android:fontFamily="sans-serif"
+					android:textColor="?attr/colorOnSurface"
+					android:lineSpacingMultiplier="1.25"
+					android:layout_marginBottom="16dp" />
+
+				<View
+					android:layout_width="match_parent"
+					android:layout_height="1dp"
+					android:background="?attr/colorOutlineVariant"
+					android:layout_marginBottom="16dp" />
+
+				<TextView
+					android:id="@+id/SMAPIInstallInfoTextView"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="SMAPI Status..."
+					android:textSize="14sp"
+					android:fontFamily="sans-serif-medium"
+					android:textColor="?attr/colorOnSurface"
+					android:layout_marginBottom="16dp" />
+
+				<!-- Fast Actions Row -->
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal">
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/SelectApkBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_height="48dp"
+						android:layout_weight="1"
+						android:text="Chọn file APK"
+						android:textSize="13sp"
+						android:textAllCaps="false"
+						android:layout_marginEnd="6dp"
+						app:cornerRadius="14dp" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/RescanGameBtn"
+						style="@style/Widget.Material3.Button.OutlinedButton"
+						android:layout_width="0dp"
+						android:layout_height="48dp"
+						android:layout_weight="1"
+						android:text="Quét lại game"
+						android:textSize="13sp"
+						android:textAllCaps="false"
+						android:layout_marginStart="6dp"
+						app:cornerRadius="14dp" />
+				</LinearLayout>
+			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+
+		<!-- Primary CTA - Start Game -->
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/StartGame"
+			style="@style/Widget.Material3.Button"
+			android:layout_width="match_parent"
+			android:layout_height="56dp"
+			android:text="Start Game"
+			android:textSize="16sp"
+			android:fontFamily="sans-serif-medium"
+			android:textAllCaps="false"
+			app:cornerRadius="28dp"
+			android:layout_marginBottom="16dp" />
+
+	</LinearLayout>
+</androidx.core.widget.NestedScrollView>
