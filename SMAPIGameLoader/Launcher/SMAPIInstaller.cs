@@ -1,39 +1,48 @@
-using Octokit;
+#nullable enable
+using Android.App;
+using Mono.Cecil;
 using SMAPIGameLoader.Tool;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using Xamarin.Essentials;
 
 namespace SMAPIGameLoader.Launcher;
 
 internal static class SMAPIInstaller
 {
+    public const string BundledSMAPIAssetName = "smapi_android.zip";
     public const string GithubOwner = "NRTnarathip";
     public const string GithubRepoName = "SMAPI-Android-1.6";
+    public const string StardewModdingAPIFileName = "StardewModdingAPI.dll";
+
+    public static string GetInstallFilePath => Path.Combine(GameAssemblyManager.AssembliesDirPath, StardewModdingAPIFileName);
+    public static bool IsInstalled => File.Exists(GetInstallFilePath);
+
+    public static Action? OnInstalledSMAPI;
+
     public static long GetBuildCode()
     {
         try
         {
-            if (IsInstalled is false)
-            {
+            if (!IsInstalled)
                 return 0;
-            }
 
             using var stream = File.OpenRead(GetInstallFilePath);
-            var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(stream);
-            var SMAPIAndroidBuild = assembly.MainModule.Types.Single(t => t.FullName == "StardewModdingAPI.Mobile.SMAPIAndroidBuild");
-            string buildString = SMAPIAndroidBuild.Fields.Single(p => p.Name == "BuildCode").Constant as string;
-            return long.Parse(buildString);
+            var assembly = AssemblyDefinition.ReadAssembly(stream);
+            var SMAPIAndroidBuild = assembly.MainModule.Types.FirstOrDefault(t => t.FullName == "StardewModdingAPI.Mobile.SMAPIAndroidBuild");
+            if (SMAPIAndroidBuild != null)
+            {
+                var field = SMAPIAndroidBuild.Fields.FirstOrDefault(p => p.Name == "BuildCode");
+                if (field?.Constant is string buildString && long.TryParse(buildString, out long code))
+                    return code;
+            }
+            return 0;
         }
         catch (Exception ex)
         {
-            //ErrorDialogTool.Show(ex);
+            Console.WriteLine("GetBuildCode error: " + ex);
             return 0;
         }
     }
@@ -42,17 +51,19 @@ internal static class SMAPIInstaller
     {
         try
         {
-            if (IsInstalled is false)
-            {
-                return null;
-            }
+            if (!IsInstalled)
+                return new Version(0, 0, 0, 0);
 
             using var stream = File.OpenRead(GetInstallFilePath);
-            var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(stream);
-            var constantsType = assembly.MainModule.Types.Single(t => t.FullName == "StardewModdingAPI.EarlyConstants");
-            var RawApiVersionForAndroidField = constantsType.Fields.Single(p => p.Name == "RawApiVersionForAndroid");
-            string version = RawApiVersionForAndroidField.Constant as string;
-            return new Version(version);
+            var assembly = AssemblyDefinition.ReadAssembly(stream);
+            var constantsType = assembly.MainModule.Types.FirstOrDefault(t => t.FullName == "StardewModdingAPI.EarlyConstants");
+            if (constantsType != null)
+            {
+                var rawApiVersionField = constantsType.Fields.FirstOrDefault(p => p.Name == "RawApiVersionForAndroid");
+                if (rawApiVersionField?.Constant is string versionStr && Version.TryParse(versionStr, out var v))
+                    return v;
+            }
+            return new Version(0, 0, 0, 0);
         }
         catch
         {
@@ -60,155 +71,110 @@ internal static class SMAPIInstaller
         }
     }
 
+    public static bool EnsureSMAPIInstalled()
+    {
+        if (!IsInstalled)
+        {
+            Console.WriteLine("SMAPI is not installed. Unpacking bundled SMAPI from assets...");
+            return InstallSMAPIFromAsset();
+        }
+        return true;
+    }
 
-#if false
-    public static async void OnClickInstallSMAPIOnline()
+    public static bool InstallSMAPIFromAsset()
     {
         try
         {
-            TaskTool.Run(ActivityTool.CurrentActivity, async () =>
+            Console.WriteLine("Opening bundled SMAPI asset: " + BundledSMAPIAssetName);
+            using var stream = Application.Context.Assets?.Open(BundledSMAPIAssetName);
+            if (stream == null)
             {
-                try
-                {
-                    TaskTool.SetTitle("Install SMAPI Online");
-                    var github = new GitHubClient(new ProductHeaderValue("SMPAI-Installer"));
-                    TaskTool.NewLine("try get all release..");
-                    var releases = await github.Repository.Release.GetAll(GithubOwner, GithubRepoName);
-                    TaskTool.NewLine("found release count: " + releases.Count);
-                    var latestRelease = releases.FirstOrDefault();
-                    if (latestRelease is null)
-                    {
-                        ErrorDialogTool.Show(new Exception("Failed install SMAPI, not found any release file"));
-                        return;
-                    }
+                Console.WriteLine("Could not open asset: " + BundledSMAPIAssetName);
+                return false;
+            }
 
-                    var smapiAssetFile = latestRelease.Assets.FirstOrDefault(
-                         asset => asset.Name.StartsWith("SMAPI-")
-                         && asset.Name.EndsWith(".zip"));
-
-                    if (smapiAssetFile != null)
-                    {
-                        TaskTool.NewLine("found SMAPI latest file: " + smapiAssetFile.Name);
-                        var smapiZipFilePath = Path.Combine(FileTool.ExternalFilesDir, smapiAssetFile.Name);
-                        TaskTool.NewLine("starting download & install");
-                        TaskTool.NewLine($"file size: {FileTool.ConvertBytesToMB(smapiAssetFile.Size):F2} MB");
-
-                        using (var netClient = new HttpClient())
-                        {
-                            Console.WriteLine($"Retrieving {smapiAssetFile.Name}");
-                            var fileData = await netClient.GetByteArrayAsync(smapiAssetFile.BrowserDownloadUrl);
-                            File.WriteAllBytes(smapiZipFilePath, fileData);
-                            Console.WriteLine("done save zip file at: " + smapiZipFilePath + ", file size: " + fileData.Length);
-                        }
-
-                        InstallSMAPIFromZipFile(smapiZipFilePath);
-
-                        TaskTool.NewLine("Successfully install SMAPI: " + smapiAssetFile.Name);
-                        DialogTool.Show("Successfully Install SMAPI",
-                            $"done install zip: {smapiAssetFile.Name}." +
-                            $"\nyou can close this");
-                    }
-                    else
-                    {
-                        TaskTool.NewLine("Not found any SMAPI");
-                    }
-
-                    await Task.Delay(1000);
-                }
-                catch (Exception ex)
-                {
-                    ErrorDialogTool.Show(ex);
-                    Console.WriteLine("error try to install SMAPI Zip: " + ex);
-                }
-            });
+            using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+            InstallSMAPIFromZipArchive(zip);
+            OnInstalledSMAPI?.Invoke();
+            return true;
         }
         catch (Exception ex)
         {
-            ErrorDialogTool.Show(ex);
-            Console.WriteLine("error try to install SMAPI Zip: " + ex);
+            Console.WriteLine("Error installing SMAPI from asset: " + ex);
+            return false;
         }
     }
-#endif
+
+    public static void InstallSMAPIFromZipArchive(ZipArchive zip)
+    {
+        var stardewDir = GameAssemblyManager.AssembliesDirPath;
+        Directory.CreateDirectory(stardewDir);
+
+        foreach (var entry in zip.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.Name))
+                continue;
+
+            int firstSlash = entry.FullName.IndexOf('/');
+            if (firstSlash < 0)
+                firstSlash = entry.FullName.IndexOf('\\');
+
+            string newEntryFileName = firstSlash >= 0 ? entry.FullName.Substring(firstSlash + 1) : entry.FullName;
+            if (string.IsNullOrWhiteSpace(newEntryFileName))
+                continue;
+
+            var destExtractFilePath = Path.Combine(stardewDir, newEntryFileName.Replace('/', Path.DirectorySeparatorChar));
+            ZipFileTool.Extract(entry, destExtractFilePath);
+        }
+
+        FileTool.ClearCache();
+    }
 
     static bool IsSMAPIZipFromPickFile(FileResult pick)
     {
         var fileName = pick.FileName;
 
-        if (fileName.EndsWith(".zip") is false)
+        if (!fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (fileName.Contains("SMAPI-Android"))
+        if (fileName.Contains("SMAPI", StringComparison.OrdinalIgnoreCase))
         {
-            //check file size should less than PC
-            //on PC SMAPI-4.1.10-installer-for-developers.zip
-            //file size 40mb
-
-            //on Android SMAPI-4.1.10.2-(1735397682).zip
-            //file size 1.5mb
             var fileInfo = new FileInfo(pick.FullPath);
-
-            //less than 30mb
-            return FileTool.ConvertBytesToMB(fileInfo.Length) <= 10;
+            return FileTool.ConvertBytesToMB(fileInfo.Length) <= 30;
         }
-
 
         return false;
     }
 
-    public static Action OnInstalledSMAPI;
-    public static async void OnClickInstallSMAPIZip(object sender, EventArgs eventArgs)
+    public static async void OnClickInstallSMAPIZip(object? sender, EventArgs? eventArgs)
     {
         try
         {
-
-            var pick = await FilePickerTool.PickZipFile(title: "Please Pick File SMAPI-4.x.x.xxxx.zip Android");
+            var pick = await FilePickerTool.PickZipFile(title: "Chọn file SMAPI Android (.zip)");
             if (pick == null)
                 return;
 
-            //assert SMAPI it's android
-            if (IsSMAPIZipFromPickFile(pick) is false)
+            if (!IsSMAPIZipFromPickFile(pick))
             {
-                DialogTool.Show("SMAPI Installer Error", "Please select file SMAPI-4.x.x.xxxx.zip for Android");
+                DialogTool.Show("Lỗi tệp SMAPI", "Vui lòng chọn file zip cài đặt SMAPI dành cho Android (ví dụ: SMAPI-4.x.x.zip).");
                 return;
             }
 
             InstallSMAPIFromZipFile(pick.FullPath);
 
-            DialogTool.Show("Successfully Install SMAPI",
-                "done installed SMAPI from zip file: " + pick.FileName);
+            ToastNotifyTool.Notify("Đã cài đặt SMAPI từ file zip thành công!");
             OnInstalledSMAPI?.Invoke();
-
         }
         catch (Exception ex)
         {
-            ToastNotifyTool.Notify(ex.ToString());
+            ToastNotifyTool.Notify("Lỗi cài đặt SMAPI: " + ex.Message);
             Console.WriteLine(ex);
         }
     }
-    static void InstallSMAPIFromZipFile(string smapiZipFilePath)
+
+    public static void InstallSMAPIFromZipFile(string smapiZipFilePath)
     {
-        using (var zip = ZipFile.OpenRead(smapiZipFilePath))
-        {
-            var stardewDir = GameAssemblyManager.AssembliesDirPath;
-            foreach (var entry in zip.Entries)
-            {
-                //remove first dir name
-                //example
-                //from 'SMAPI-4.1.10.2/Hello.dll'
-                //to 'Hello.dll'
-
-                string entryDirName = Path.GetDirectoryName(entry.FullName);
-                string[] directoryNames = entryDirName.Split(Path.DirectorySeparatorChar);
-                var rootDirName = directoryNames[0];
-                var newEntryFileName = entry.FullName.Remove(0, rootDirName.Length + 1);
-                var destExtractFilePath = Path.Combine(stardewDir, newEntryFileName);
-                ZipFileTool.Extract(entry, destExtractFilePath);
-            }
-        }
-
-        FileTool.ClearCache();
+        using var zip = ZipFile.OpenRead(smapiZipFilePath);
+        InstallSMAPIFromZipArchive(zip);
     }
-    public const string StardewModdingAPIFileName = "StardewModdingAPI.dll";
-    public static string GetInstallFilePath => Path.Combine(GameAssemblyManager.AssembliesDirPath, StardewModdingAPIFileName);
-    public static bool IsInstalled => File.Exists(GetInstallFilePath);
 }

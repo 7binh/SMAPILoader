@@ -44,6 +44,11 @@ public class HomeFragment : Fragment
         if (rescanGameBtn != null)
             rescanGameBtn.Click += OnClickRescanGame;
 
+        if (!SMAPIInstaller.IsInstalled)
+        {
+            SMAPIInstaller.EnsureSMAPIInstalled();
+        }
+
         SMAPIInstaller.OnInstalledSMAPI += RefreshInfo;
 
         RefreshInfo();

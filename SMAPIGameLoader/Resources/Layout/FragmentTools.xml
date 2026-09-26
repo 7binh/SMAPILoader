@@ -69,17 +69,28 @@
 				<TextView
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:text="Cài đặt hoặc cập nhật phiên bản SMAPI Android mới nhất từ file zip tải về."
+					android:text="Ứng dụng đã tích hợp sẵn SMAPI Android ổn định. Bạn có thể khôi phục lại bản gốc hoặc nạp file ZIP phiên bản tùy chỉnh."
 					android:textSize="13sp"
 					android:textColor="?attr/colorOnSurfaceVariant"
 					android:layout_marginBottom="16dp" />
 
 				<com.google.android.material.button.MaterialButton
-					android:id="@+id/InstallSMAPIZip"
+					android:id="@+id/RestoreDefaultSMAPIBtn"
 					style="@style/Widget.Material3.Button.TonalButton"
 					android:layout_width="match_parent"
 					android:layout_height="50dp"
-					android:text="Cài đặt SMAPI từ file Zip"
+					android:text="Khôi phục SMAPI tích hợp sẵn"
+					android:textSize="14sp"
+					android:textAllCaps="false"
+					android:layout_marginBottom="10dp"
+					app:cornerRadius="16dp" />
+
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/InstallSMAPIZip"
+					style="@style/Widget.Material3.Button.OutlinedButton"
+					android:layout_width="match_parent"
+					android:layout_height="50dp"
+					android:text="Cài đặt SMAPI từ file Zip ngoài"
 					android:textSize="14sp"
 					android:textAllCaps="false"
 					app:cornerRadius="16dp" />
