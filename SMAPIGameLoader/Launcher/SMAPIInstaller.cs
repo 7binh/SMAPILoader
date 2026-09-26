@@ -110,20 +110,41 @@ internal static class SMAPIInstaller
         var stardewDir = GameAssemblyManager.AssembliesDirPath;
         Directory.CreateDirectory(stardewDir);
 
+        // Determine root prefix based on StardewModdingAPI.dll location
+        var stardewEntry = zip.Entries.FirstOrDefault(e => string.Equals(e.Name, StardewModdingAPIFileName, StringComparison.OrdinalIgnoreCase));
+        string prefix = "";
+        if (stardewEntry != null)
+        {
+            int lastSlash = stardewEntry.FullName.LastIndexOfAny(new[] { '/', '\\' });
+            if (lastSlash >= 0)
+                prefix = stardewEntry.FullName.Substring(0, lastSlash + 1);
+        }
+        else
+        {
+            var firstEntry = zip.Entries.FirstOrDefault(e => !string.IsNullOrEmpty(e.Name));
+            if (firstEntry != null)
+            {
+                int firstSlash = firstEntry.FullName.IndexOfAny(new[] { '/', '\\' });
+                if (firstSlash >= 0)
+                    prefix = firstEntry.FullName.Substring(0, firstSlash + 1);
+            }
+        }
+
         foreach (var entry in zip.Entries)
         {
             if (string.IsNullOrEmpty(entry.Name))
                 continue;
 
-            int firstSlash = entry.FullName.IndexOf('/');
-            if (firstSlash < 0)
-                firstSlash = entry.FullName.IndexOf('\\');
+            string relativePath = entry.FullName;
+            if (!string.IsNullOrEmpty(prefix) && relativePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                relativePath = relativePath.Substring(prefix.Length);
+            }
 
-            string newEntryFileName = firstSlash >= 0 ? entry.FullName.Substring(firstSlash + 1) : entry.FullName;
-            if (string.IsNullOrWhiteSpace(newEntryFileName))
+            if (string.IsNullOrWhiteSpace(relativePath))
                 continue;
 
-            var destExtractFilePath = Path.Combine(stardewDir, newEntryFileName.Replace('/', Path.DirectorySeparatorChar));
+            var destExtractFilePath = Path.Combine(stardewDir, relativePath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
             ZipFileTool.Extract(entry, destExtractFilePath);
         }
 
